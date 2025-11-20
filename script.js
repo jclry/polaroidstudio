@@ -128,6 +128,7 @@ function createAndAnimateGhostCard(imgSrc, bgColor, targetOffset, timestamp) {
     ghost.innerHTML = `
         <div class="image-container">
             <img src="${imgSrc}" class="developing-img">
+            <div class="develop-overlay"></div>
         </div>
         <div class="date-label">${timestamp}</div>
     `;
@@ -165,12 +166,19 @@ function createAndAnimateGhostCard(imgSrc, bgColor, targetOffset, timestamp) {
         // 关键修复：DOM 移动会导致 CSS 动画重置，需手动同步显影进度
         const handoffElapsed = Date.now() - developStartTime;
         const img = ghost.querySelector('.developing-img');
+        const overlay = ghost.querySelector('.develop-overlay');
+        
         if (img) {
-            // 强制重置动画状态以确保 delay 生效
             img.style.animationName = 'none';
-            void img.offsetWidth; // 触发重排
+            void img.offsetWidth; 
             img.style.animationName = 'developPhoto';
             img.style.animationDelay = `-${handoffElapsed}ms`;
+        }
+        if (overlay) {
+            overlay.style.animationName = 'none';
+            void overlay.offsetWidth; 
+            overlay.style.animationName = 'developWhiteOverlay';
+            overlay.style.animationDelay = `-${handoffElapsed}ms`;
         }
         
         ghost.style.position = 'fixed';
@@ -230,6 +238,9 @@ function finishSequence(ghostElement, imgSrc, bgColor, position, rotation, times
     card.className = 'polaroid-card';
     card.style.backgroundColor = bgColor;
     
+    // 记录创建时间，用于动画同步
+    card.dataset.createdAt = developStartTime;
+    
     // 初始定位
     card.style.position = 'absolute';
     card.style.left = '50%';
@@ -242,17 +253,13 @@ function finishSequence(ghostElement, imgSrc, bgColor, position, rotation, times
     card.innerHTML = `
         <div class="image-container">
             <img src="${imgSrc}" class="developing-img">
+            <div class="develop-overlay"></div>
         </div>
         <div class="date-label">${timestamp}</div>
     `;
     
     // 计算并同步显影动画进度
-    const elapsed = Date.now() - developStartTime;
-    const img = card.querySelector('.developing-img');
-    if (img) {
-        // 这里是新创建的 DOM，动画默认从 0 开始，直接设置 delay 即可
-        img.style.animationDelay = `-${elapsed}ms`;
-    }
+    syncAnimationState(card);
     
     // 绑定数据
     card.dataset.x = position.x;
@@ -262,12 +269,36 @@ function finishSequence(ghostElement, imgSrc, bgColor, position, rotation, times
     // 绑定点击事件（用于触发 Lightbox）
     // 注意：区分点击和拖拽
     card.addEventListener('click', function(e) {
-        if (!isDragging && !activeLightboxCard) {
+        if (!hasMoved && !activeLightboxCard) {
             openLightbox(card);
         }
     });
 
     canvasWorld.appendChild(card);
+}
+
+// 动画同步辅助函数
+function syncAnimationState(card) {
+    const createdAt = parseInt(card.dataset.createdAt);
+    if (!createdAt) return;
+    
+    const elapsed = Date.now() - createdAt;
+    
+    const img = card.querySelector('.developing-img');
+    const overlay = card.querySelector('.develop-overlay');
+    
+    if (img) {
+        img.style.animationName = 'none';
+        void img.offsetWidth;
+        img.style.animationName = 'developPhoto';
+        img.style.animationDelay = `-${elapsed}ms`;
+    }
+    if (overlay) {
+        overlay.style.animationName = 'none';
+        void overlay.offsetWidth;
+        overlay.style.animationName = 'developWhiteOverlay';
+        overlay.style.animationDelay = `-${elapsed}ms`;
+    }
 }
 
 // 3. 颜色切换逻辑 (仅更新 UI 状态)
@@ -360,51 +391,62 @@ function openLightbox(card) {
 
     activeLightboxCard = card;
     
-    // 保存卡片当前的内联样式
-    originalCardStyles.position = card.style.position;
-    originalCardStyles.top = card.style.top;
-    originalCardStyles.left = card.style.left;
-    originalCardStyles.transform = card.style.transform;
+    // 1. Sync animation state BEFORE moving (to capture current visual state mentally, although not strictly needed)
+    syncAnimationState(card);
+
+    // 保存原始 zIndex (其他样式通过 dataset 还原)
     originalCardStyles.zIndex = card.style.zIndex;
 
-    // 获取卡片当前在视口中的位置
+    // 获取卡片当前在视口中的位置 (Bounding Box)
     const rect = card.getBoundingClientRect();
+    const rotation = parseFloat(card.dataset.r) || 0;
     
-    // 将卡片切换为 fixed 定位，并保持在当前视觉位置 (作为动画起点)
+    // === 关键修复：将卡片移至 body，摆脱 .canvas-world 的 transform 上下文 ===
+    document.body.appendChild(card);
+    
+    // 2. Sync animation state AFTER moving (Critical: reparenting resets animation)
+    syncAnimationState(card);
+    
+    // 计算视觉中心点
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // 将卡片切换为 fixed 定位，并保持在当前视觉位置 (中心定位法)
     card.style.position = 'fixed';
-    card.style.top = rect.top + 'px';
-    card.style.left = rect.left + 'px';
-    card.style.transform = 'none'; // 移除 transform，因为我们直接设定了 top/left
+    card.style.top = centerY + 'px';
+    card.style.left = centerX + 'px';
+    // 初始 transform 包含旋转，确保无缝衔接
+    card.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
     card.style.margin = '0';
     card.style.zIndex = '9999';
     
     // 激活遮罩
     lightboxOverlay.classList.add('active');
     
-    // 强制重排，确保浏览器记录下起始位置
+    // 强制重排
     void card.offsetWidth;
 
-    // 激活灯箱类 (添加阴影等样式)
+    // 激活灯箱类
     card.classList.add('lightbox-active');
 
-    // 设定动画终点：屏幕中心
-    // 目标位置：屏幕中心减去卡片一半宽/高
-    // 注意：CSS 中可能有 scale 放大，这里我们用 transform 来做位移和缩放
+    // 计算屏幕中心目标位置
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const cardWidth = rect.width; // 此时卡片未缩放
-    const cardHeight = rect.height;
     
-    const targetX = (viewportWidth - cardWidth) / 2;
-    const targetY = (viewportHeight - cardHeight) / 2;
+    // 目标是屏幕中心
+    const targetCenterX = viewportWidth / 2;
+    const targetCenterY = viewportHeight / 2;
     
-    // 计算从当前 fixed 位置 (rect.left, rect.top) 到目标位置 (targetX, targetY) 的位移
-    const translateX = targetX - rect.left;
-    const translateY = targetY - rect.top;
+    // 计算位移 (从当前 centerX/Y 到目标 CenterX/Y)
+    // 我们的 transform 是 translate(-50%, -50%) translate(delta)
+    // 所以 delta = targetCenter - currentCenter
     
-    // 应用变换：位移 + 放大 + 摆正(不旋转)
-    // 注意：因为我们之前清除了 transform，现在的 rotation 是 0
-    card.style.transform = `translate(${translateX}px, ${translateY}px) scale(1.5)`;
+    const deltaX = targetCenterX - centerX;
+    const deltaY = targetCenterY - centerY;
+    
+    // 应用变换：位移 + 放大 + 旋转回正 (rotate 0)
+    // 注意：translate 计算是基于初始中心点的偏移
+    card.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(1.5) rotate(0deg)`;
 }
 
 function closeLightbox() {
@@ -413,41 +455,42 @@ function closeLightbox() {
     // 移除遮罩
     lightboxOverlay.classList.remove('active');
     
-    // 移除卡片灯箱样式类
-    activeLightboxCard.classList.remove('lightbox-active');
+    // 恢复动画：回到原来的位置 (fixed origin) 并恢复旋转
+    // 这里的 "原来的位置" 就是我们 fixed 定位的 top/left (即 centerX, centerY)
+    // 所以位移是 0，旋转是原始角度 R
+    const r = activeLightboxCard.dataset.r;
+    activeLightboxCard.style.transform = `translate(-50%, -50%) scale(1) rotate(${r}deg)`;
     
-    // 恢复动画：回到原来的位置
-    // 因为我们之前是 fixed 定位，现在我们需要让它回到那个 visually 相同的位置，但其实我们保存了原始的 absolute 布局
-    // 更好的做法是：先让它以 fixed 方式飞回原来的屏幕坐标，动画结束后，再切回 absolute
-    
-    // 1. 恢复到 fixed 状态下的初始位置 (即动画起点，也就是 absolute 时的屏幕位置)
-    card = activeLightboxCard;
-    card.style.transform = 'translate(0, 0) scale(1)';
-    
-    // 监听 transition 结束
-    // 为了防止多次绑定，使用 { once: true }
+    const card = activeLightboxCard;
     card.addEventListener('transitionend', function restoreStyle() {
-        if (card !== activeLightboxCard) { // 确保是当前关闭的卡片
-            // 恢复原始样式 (absolute 定位)
-            card.style.position = originalCardStyles.position;
-            card.style.top = originalCardStyles.top;
-            card.style.left = originalCardStyles.left;
-            card.style.transform = originalCardStyles.transform;
-            card.style.zIndex = originalCardStyles.zIndex;
-            // 清理 margin (openLightbox 时设为了 0)
-            card.style.margin = ''; 
+        // 确保当前还在处理这张卡片的关闭流程
+        if (card === activeLightboxCard) { 
+            // 动画结束后再移除灯箱样式
+            card.classList.remove('lightbox-active');
+
+            // === 关键修复：移回 .canvas-world ===
+            canvasWorld.appendChild(card);
             
-            // 强制重置 activeCard
+            // 3. Sync animation state AFTER moving back
+            syncAnimationState(card);
+
+            // 恢复原始样式 (absolute 定位)
+            card.style.position = 'absolute';
+            card.style.top = '50%';
+            card.style.left = '50%';
+            card.style.margin = ''; 
+            card.style.zIndex = originalCardStyles.zIndex;
+            
+            // 从 dataset 恢复准确的 transform (位置 + 旋转)
+            const x = card.dataset.x;
+            const y = card.dataset.y;
+            // r is already const r above
+            card.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${r}deg)`;
+            
+            // 重置 activeCard
              activeLightboxCard = null;
         }
     }, { once: true });
-    
-    // 这里的 activeLightboxCard 需要在动画开始后就置空吗？
-    // 不，因为我们需要在 transitionend 中引用它。
-    // 但 closeLightbox 可能被快速点击触发，所以我们需要一个局部变量引用它，然后把全局置空？
-    // 或者在 transitionend 里置空。
-    // 为了防止逻辑冲突，我们这里暂不置空全局变量，直到动画结束。
-    // 但如果用户在动画期间又点击了别的？遮罩层会挡住操作。
 }
 
 // 点击遮罩关闭灯箱

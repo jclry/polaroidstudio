@@ -253,11 +253,9 @@ body {
 }
 
 /* 
-   新增白色显影遮罩层 
-   (用于替代 filter brightness 实现白屏过渡)
+   显影遮罩层 (原伪元素改为实体元素以支持 JS 控制)
 */
-.image-container::before {
-    content: "";
+.develop-overlay {
     position: absolute;
     top: 0;
     left: 0;
