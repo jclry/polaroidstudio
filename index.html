@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polaroid Studio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="studio-container">
+        <!-- Left Stage: Camera & Controls -->
+        <div class="camera-stage">
+            <h1 class="main-title">
+                <img src="assets/Logo2.svg" alt="Polaroid Studio" class="full-logo">
+            </h1>
+            
+            <!-- Color Picker -->
+            <div class="color-palette">
+                <div class="color-dot active" style="background-color: #F8C8C0;" data-color="#F8C8C0"></div>
+                <div class="color-dot" style="background-color: #E6C270;" data-color="#E6C270"></div>
+                <div class="color-dot" style="background-color: #BFA0D9;" data-color="#BFA0D9"></div>
+                <div class="color-dot" style="background-color: #5A7EC7;" data-color="#5A7EC7"></div>
+                <div class="color-dot" style="background-color: #FBE060;" data-color="#FBE060"></div>
+                <div class="color-dot" style="background-color: #9EC5F7;" data-color="#9EC5F7"></div>
+                <div class="color-dot" style="background-color: #96C975;" data-color="#96C975"></div>
+                <div class="color-dot" style="background-color: #F2A057;" data-color="#F2A057"></div>
+                <div class="color-dot" style="background-color: #E04A4A;" data-color="#E04A4A"></div>
+                <div class="color-dot" style="background-color: #E259A1;" data-color="#E259A1"></div>
+            </div>
+
+            <!-- Camera -->
+            <div class="camera-wrapper">
+                <img src="assets/camera.png" alt="Polaroid Camera" class="camera-img">
+                <div class="shutter-trigger" onclick="triggerCamera()"></div>
+                
+                <!-- Printing Slot Mask -->
+                <div class="printing-mask" id="printSlot">
+                    <!-- Ghost Card will appear here -->
+                </div>
+            </div>
+            
+            <p class="instruction">Click the shutter button to take a photo</p>
+        </div>
+
+        <!-- Right Stage: Photo Gallery (Infinite Canvas) -->
+        <div class="photo-gallery" id="galleryViewport">
+            <div class="canvas-world" id="canvasWorld">
+                <!-- Dynamic Polaroid Cards will be appended here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Overlay -->
+    <div id="lightbox-overlay" class="lightbox-overlay"></div>
+
+    <!-- Hidden Elements -->
+    <input type="file" id="file-input" accept="image/*">
+    <img id="preview-img" style="display: none;">
+    <input type="hidden" id="dateLabel" value="08.25.25">
+
+    <!-- Flash Overlay -->
+    <div id="flash-overlay"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

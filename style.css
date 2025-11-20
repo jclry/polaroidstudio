@@ -1,0 +1,440 @@
+/* 全局样式 */
+:root {
+    --bg-color: #F4F8FD;
+    --frame-color: #ffffff; /* 默认白色 */
+    --text-color: #333;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+    color: #1d1d1f;
+    overflow: hidden; /* 防止整个页面滚动 */
+}
+
+/* 布局容器 */
+.studio-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh; /* 固定高度 */
+}
+
+/* 左侧操作区域 (相机 + 控制) */
+.camera-stage {
+    width: 400px; /* 固定宽度，或者 flex: 0 0 400px */
+    min-width: 360px;
+    background-color: #eef2f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    /* 移除右边框 */
+    border-right: none; 
+    padding: 40px 20px;
+    gap: 20px;
+    z-index: 10; /* 确保在画布之上 */
+}
+
+/* Create a smooth gradient transition to the right panel */
+.camera-stage::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -80px; /* Extend into the gallery */
+    bottom: 0;
+    width: 80px;
+    /* Gradient from left panel color (#eef2f7) to right panel color (#f8f9fa) but transparent */
+    background: linear-gradient(to right, #eef2f7, rgba(248, 249, 250, 0));
+    pointer-events: none; /* Allow clicking through to the canvas */
+    z-index: 1;
+}
+
+/* 标题区域样式 */
+.main-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    width: 100%;
+}
+
+.full-logo {
+    height: 60px; /* 放大 1.5 倍 (44 * 1.5) */
+    width: auto;
+    display: block;
+}
+
+/* 颜色选择器 */
+.color-palette {
+    display: flex;
+    gap: 8px; /* 缩小间距 */
+    background: transparent;
+    padding: 10px;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 10px;
+    flex-wrap: wrap; /* 防止过多颜色溢出 */
+    justify-content: center;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 0px; /* 适配缩小后的尺寸 */
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+    box-shadow: none;
+}
+.color-dot:hover {
+    transform: scale(1.2);
+}
+.color-dot.active {
+    border-color: #333;
+    transform: scale(1.1);
+}
+
+.camera-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    z-index: 10;
+}
+
+.camera-img {
+    width: 100%;
+    display: block;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15));
+    position: relative;
+    z-index: 20;
+}
+
+/* 快门热区 */
+.shutter-trigger {
+    position: absolute;
+    top: 57%;
+    left: 22%;
+    width: 14%;
+    height: 14%;
+    background-color: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 30;
+}
+.shutter-trigger:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 蒙版出片口 */
+.printing-mask {
+    position: absolute;
+    top: 79%; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 46%;
+    height: 340px; 
+    overflow: hidden; 
+    z-index: 25; 
+    pointer-events: none;
+    box-shadow: none;
+}
+
+.printing-mask::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.printing-mask.active::after {
+    opacity: 1;
+}
+
+.instruction {
+    color: #888;
+    font-size: 14px;
+    margin-top: 10px;
+    font-family: "Futura", "Century Gothic", sans-serif;
+}
+
+/* 右侧无限画布视口 */
+.photo-gallery {
+    flex: 1;
+    position: relative;
+    overflow: hidden; /* 隐藏超出的画布 */
+    cursor: grab;
+    background-color: #f8f9fa; /* 画布底色 */
+}
+.photo-gallery:active {
+    cursor: grabbing;
+}
+
+/* 无限画布层 */
+.canvas-world {
+    position: absolute;
+    width: 300%; /* 足够大 */
+    height: 300%;
+    left: 50%;
+    top: 50%;
+    /* 初始居中：JS 会控制这个 transform */
+    transform: translate(-50%, -50%);
+    
+    /* 点状背景优化 */
+    background-image: radial-gradient(#e6e6e6 1.5px, transparent 1.5px);
+    background-size: 14px 14px;
+    background-position: center;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+/* 拍立得卡片样式 */
+.polaroid-card {
+    width: 320px;
+    background-color: var(--frame-color);
+    padding: 15px 15px 60px 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: rotate(2deg);
+    /* 禁止卡片内部触发拖拽（如果需要拖动画布） */
+    user-select: none;
+    /* 关键修复：统一盒模型，防止尺寸跳变 */
+    box-sizing: border-box;
+    /* 模拟相纸厚度的微小内阴影 */
+    box-shadow: 
+        0 15px 35px rgba(0,0,0,0.1), /* 原有的投影 */
+        inset 0 0 2px 2px rgba(0,0,0,0.1); /* 新增：极细的内描边阴影，模拟厚度边缘 */
+}
+
+/* 隐藏状态的卡片 */
+.hidden-card {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 统一的图片容器样式 (方形) */
+.image-container {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* 1:1 宽高比 */
+    background-color: #fdfdfd; /* 改为接近白色，模拟相纸初始状态 */
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+.image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none; /* 防止拖图 */
+}
+
+/* 
+   新增白色显影遮罩层 
+   (用于替代 filter brightness 实现白屏过渡)
+*/
+.image-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff; /* 纯白遮罩 */
+    z-index: 50; /* 在图片之上，在内阴影之下 */
+    animation: developWhiteOverlay 15s ease-in-out forwards;
+    mix-blend-mode: normal;
+    pointer-events: none;
+}
+
+/* 白色遮罩消退动画 */
+@keyframes developWhiteOverlay {
+    0% { opacity: 1; }
+    40% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
+
+/* 显影动画 - 富士胶片模拟 */
+@keyframes developPhoto {
+    0% { 
+        opacity: 0; 
+        /* 移除 brightness，只保留色彩滤镜 */
+        filter: grayscale(100%) contrast(1.15) saturate(1.2) sepia(0.1) hue-rotate(-5deg); 
+    }
+    40% {
+        opacity: 0.3;
+        filter: grayscale(80%) contrast(1.15) saturate(1.2) sepia(0.1) hue-rotate(-5deg);
+    }
+    100% { 
+        opacity: 1; 
+        filter: grayscale(0%) contrast(1.15) saturate(1.2) brightness(1.05) sepia(0.1) hue-rotate(-5deg);
+    }
+}
+
+.developing-img {
+    animation: developPhoto 15s ease-in-out forwards;
+}
+
+.upload-hint {
+    color: #888;
+    font-size: 14px;
+    pointer-events: none;
+    display: none;
+}
+
+/* 添加胶片质感层 (Fuji Tint) */
+.image-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 
+       模拟胶片色偏 (Fuji Tint) & 恢复暗角 (Vignette)
+       1. 恢复 radial-gradient 暗角，使用 multiply 混合，模拟四角失光
+       2. 保持胶片色偏 linear-gradient，模拟色彩倾向
+    */
+    background: 
+        radial-gradient(circle, transparent 60%, rgba(10, 20, 30, 0.4) 100%),
+        linear-gradient(135deg, rgba(10, 50, 60, 0.15) 0%, rgba(255, 240, 220, 0.1) 100%);
+    pointer-events: none;
+    z-index: 40; /* 提高层级，确保在白色遮罩层之上 */
+    mix-blend-mode: normal; /* 既然有两层背景，改回 normal 让叠加生效，或者调整 opacity */
+    /* 增加内阴影模拟相纸边缘漏光/厚度感 */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    opacity: 0.9; 
+}
+
+.date-label {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-family: "Courier New", Courier, monospace;
+    color: #666;
+    font-size: 14px;
+    letter-spacing: 1px;
+    outline: none;
+    border: none;
+    background: transparent;
+    text-align: right;
+    width: 100%;
+}
+
+/* 灯箱遮罩 */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.85); /* 白色透明背景 */
+    backdrop-filter: blur(8px); /* 毛玻璃效果 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 9000;
+    cursor: pointer; /* 点击关闭 */
+}
+
+.lightbox-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 灯箱模式下的卡片样式 */
+.polaroid-card.lightbox-active {
+    /* 注意：具体的位置和变换由 JS 动态计算并以内联样式覆盖 */
+    z-index: 9999;
+    cursor: default;
+    /* 添加更强的阴影 */
+    box-shadow: 
+        0 30px 60px rgba(0,0,0,0.2),
+        inset 0 0 2px 2px rgba(0,0,0,0.1);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 飞行中的幽灵卡片 */
+.ghost-card {
+    width: 320px;
+    background-color: white;
+    padding: 15px 15px 60px 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 100; /* 确保飞行时在最上层 */
+    
+    /* 确保 ghost-card 内部布局与 polaroid-card 一致 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 闪光灯遮罩 */
+#flash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.flash-active {
+    animation: flashAnim 0.6s ease-out forwards;
+}
+
+@keyframes flashAnim {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
+
+#file-input {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .studio-container {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+    }
+    .camera-stage {
+        width: 100%;
+        padding: 40px 0;
+        min-height: auto;
+        border-bottom: 1px solid #eee;
+        box-shadow: none;
+    }
+    .camera-wrapper {
+        width: 300px;
+    }
+    .photo-gallery {
+        height: 600px; /* 移动端固定高度 */
+    }
+}
