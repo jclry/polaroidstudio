@@ -1,0 +1,233 @@
+/* ==========================================
+   CARD.CSS - 拍立得卡片 + 灯箱样式
+   ========================================== */
+
+/* 拍立得卡片基础样式 */
+.polaroid-card {
+    width: 320px;
+    background-color: var(--frame-color);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 15px 15px 60px 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: rotate(2deg);
+    user-select: none;
+    box-sizing: border-box;
+    box-shadow: 
+        0 15px 35px rgba(0,0,0,0.1),
+        inset 0 0 2px 2px rgba(0,0,0,0.1);
+}
+
+/* 隐藏状态 */
+.hidden-card {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 图片容器（方形 1:1） */
+.image-container {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    background-color: #fdfdfd;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+
+.image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+/* 显影遮罩层 */
+.develop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: 50;
+    animation: developWhiteOverlay 15s ease-in-out forwards;
+    mix-blend-mode: normal;
+    pointer-events: none;
+}
+
+/* 显影图片样式 */
+.developing-img {
+    animation: developPhoto 15s ease-in-out forwards;
+}
+
+/* 已显影（静态）图片样式 - 用于从 DB 加载的旧照片 */
+.developed-img {
+    opacity: 1;
+    filter: grayscale(0%) contrast(1.15) saturate(1.2) brightness(1.05) sepia(0.1) hue-rotate(-5deg);
+}
+
+/* 胶片质感层（Fuji Tint + 暗角） */
+.image-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle, transparent 60%, rgba(10, 20, 30, 0.4) 100%),
+        linear-gradient(135deg, rgba(10, 50, 60, 0.15) 0%, rgba(255, 240, 220, 0.1) 100%);
+    pointer-events: none;
+    z-index: 40;
+    mix-blend-mode: normal;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    opacity: 0.9;
+}
+
+.upload-hint {
+    color: #888;
+    font-size: 14px;
+    pointer-events: none;
+    display: none;
+}
+
+/* 日期标签 */
+.date-label {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-family: "Courier New", Courier, monospace;
+    color: #666;
+    font-size: 14px;
+    letter-spacing: 1px;
+    outline: none;
+    border: none;
+    background: transparent;
+    text-align: right;
+    width: 100%;
+}
+
+/* 幽灵卡片（飞行中） */
+.ghost-card {
+    width: 320px;
+    background-color: white;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 15px 15px 60px 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 灯箱遮罩 */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 9000;
+    cursor: pointer;
+}
+
+.lightbox-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 灯箱模式下的卡片 */
+.polaroid-card.lightbox-active {
+    z-index: 9999;
+    cursor: default;
+    box-shadow: 
+        0 30px 60px rgba(0,0,0,0.2),
+        inset 0 0 2px 2px rgba(0,0,0,0.1);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 操作栏容器：仅负责布局 */
+.action-bar {
+    display: flex;
+    position: absolute;
+    bottom: -60px; /* 在卡片下方 */
+    left: 0;
+    width: 100%;
+    justify-content: center;
+    gap: 15px;
+    pointer-events: none; /* 默认不可交互 */
+    z-index: 10000;
+}
+
+/* 激活时允许交互 */
+.polaroid-card.actions-visible .action-bar {
+    pointer-events: auto;
+}
+
+/* 按钮样式 & 动画核心 */
+.action-btn {
+    background: #fff;
+    border: 0.5px solid #e0e0e0;
+    color: #666;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    font-family: Futura, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    /* 默认状态 (Hidden) - 快速退出 */
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.1s ease, transform 0.1s ease; /* 快速消失 */
+}
+
+/* 按钮激活状态 (Visible) - 慢速进入 */
+.polaroid-card.actions-visible .action-btn {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* 慢速浮现 */
+}
+
+/* 交错动画：删除按钮延迟 */
+.polaroid-card.actions-visible .btn-delete {
+    transition-delay: 0.1s;
+}
+
+/* Hover 效果 */
+.polaroid-card.actions-visible .action-btn:hover {
+    border-color: #999;
+    color: #333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+/* Disabled 状态 */
+.action-btn:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    border-color: #f0f0f0;
+    background-color: #fafafa;
+    pointer-events: none;
+}

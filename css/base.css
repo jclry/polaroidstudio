@@ -1,0 +1,119 @@
+/* ==========================================
+   BASE.CSS - 全局样式 + 布局
+   ========================================== */
+
+/* CSS 变量 */
+:root {
+    --bg-color: #F4F8FD;
+    --frame-color: #ffffff;
+    --text-color: #333;
+}
+
+/* 全局重置 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+    color: #1d1d1f;
+    overflow: hidden;
+}
+
+/* 主布局容器 */
+.studio-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+}
+
+/* 左侧操作区域 */
+.camera-stage {
+    width: 400px;
+    min-width: 360px;
+    background-color: #eef2f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-right: none;
+    padding: 40px 20px;
+    gap: 20px;
+    z-index: 10;
+}
+
+/* 渐变过渡效果 */
+.camera-stage::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -80px;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, #eef2f7, rgba(248, 249, 250, 0));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 右侧画布视口 */
+.photo-gallery {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    background-color: #f8f9fa;
+}
+
+.photo-gallery:active {
+    cursor: grabbing;
+}
+
+/* 无限画布层 */
+.canvas-world {
+    position: absolute;
+    width: 300%;
+    height: 300%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-image: radial-gradient(#e6e6e6 1.5px, transparent 1.5px);
+    background-size: 14px 14px;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+/* 隐藏元素 */
+#file-input {
+    display: none;
+}
+
+/* 响应式布局 */
+@media (max-width: 900px) {
+    .studio-container {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+    }
+    
+    .camera-stage {
+        width: 100%;
+        padding: 40px 0;
+        min-height: auto;
+        border-bottom: 1px solid #eee;
+        box-shadow: none;
+    }
+    
+    .camera-wrapper {
+        width: 300px;
+    }
+    
+    .photo-gallery {
+        height: 600px;
+    }
+}
