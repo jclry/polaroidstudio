@@ -1,0 +1,123 @@
+/* ==========================================
+   CAMERA.CSS - 相机组件样式
+   ========================================== */
+
+/* Logo 样式 */
+.main-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    width: 100%;
+}
+
+.full-logo {
+    height: 60px;
+    width: auto;
+    display: block;
+}
+
+/* 颜色选择器 */
+.color-palette {
+    display: flex;
+    gap: 8px;
+    background: transparent;
+    padding: 10px;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 0px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+    box-shadow: none;
+}
+
+.color-dot:hover {
+    transform: scale(1.2);
+}
+
+.color-dot.active {
+    border-color: #333;
+    transform: scale(1.1);
+}
+
+/* 相机容器 */
+.camera-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    z-index: 10;
+}
+
+.camera-img {
+    width: 100%;
+    display: block;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15));
+    position: relative;
+    z-index: 20;
+}
+
+/* 快门热区 */
+.shutter-trigger {
+    position: absolute;
+    top: 57%;
+    left: 22%;
+    width: 14%;
+    height: 14%;
+    background-color: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 30;
+}
+
+.shutter-trigger:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 出片口蒙版 */
+.printing-mask {
+    position: absolute;
+    top: 79%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 46%;
+    height: 340px;
+    overflow: hidden;
+    z-index: 25;
+    pointer-events: none;
+    box-shadow: none;
+}
+
+.printing-mask::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.printing-mask.active::after {
+    opacity: 1;
+}
+
+/* 提示文字 */
+.instruction {
+    color: #888;
+    font-size: 14px;
+    margin-top: 10px;
+    font-family: "Futura", "Century Gothic", sans-serif;
+}

@@ -256,6 +256,10 @@ function finishSequence(ghostElement, imgSrc, bgColor, position, rotation, times
             <div class="develop-overlay"></div>
         </div>
         <div class="date-label">${timestamp}</div>
+        <div class="action-bar">
+            <button class="action-btn btn-download">下载</button>
+            <button class="action-btn btn-delete">删除</button>
+        </div>
     `;
     
     // 计算并同步显影动画进度
@@ -265,6 +269,38 @@ function finishSequence(ghostElement, imgSrc, bgColor, position, rotation, times
     card.dataset.x = position.x;
     card.dataset.y = position.y;
     card.dataset.r = rotation;
+
+    // 绑定操作按钮事件
+    const btnDownload = card.querySelector('.btn-download');
+    const btnDelete = card.querySelector('.btn-delete');
+
+    if (btnDownload) {
+        btnDownload.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const link = document.createElement('a');
+            // 使用时间戳作为文件名
+            link.download = `polaroid_${Date.now()}.png`;
+            link.href = imgSrc;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
+    if (btnDelete) {
+        btnDelete.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // 如果在灯箱模式下删除，需要清理灯箱状态
+            if (activeLightboxCard === card) {
+                lightboxOverlay.classList.remove('active');
+                activeLightboxCard = null;
+            }
+            
+            // 移除卡片
+            card.remove();
+        });
+    }
     
     // 绑定点击事件（用于触发 Lightbox）
     // 注意：区分点击和拖拽

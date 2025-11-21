@@ -375,6 +375,47 @@ body {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+/* 操作栏容器：默认隐藏 */
+.action-bar {
+    display: none; /* 默认不显示 */
+    position: absolute;
+    bottom: -60px; /* 在卡片下方 */
+    left: 0;
+    width: 100%;
+    justify-content: center;
+    gap: 15px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* 灯箱模式下显示 */
+.polaroid-card.lightbox-active .action-bar {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 按钮样式 */
+.action-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    color: #666;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.action-btn:hover {
+    border-color: #999;
+    color: #333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 /* 飞行中的幽灵卡片 */
 .ghost-card {
     width: 320px;
